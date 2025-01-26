@@ -11,27 +11,24 @@ root.geometry("800x800")
 root.configure(bg="black")
 
 def on_apply():
-    selected_tv_logo = tv_options[tv_var.get()]
-    selected_scoreboard = scoreboard_options[scoreboard_var.get()]
-    selected_tv_logo = os.path.join(selected_tv_logo, 'data')
-    selected_scoreboard = os.path.join(selected_scoreboard, 'data')
     
-    print(selected_scoreboard, selected_tv_logo)
-    
-    # Define source and destination directories
-    source_tv_logo = os.path.join(tv_logo_directory, selected_tv_logo)
-    source_scoreboard = os.path.join(scoreboard_directory, selected_scoreboard)
-    destination_directory = "C:\\FC 25 Live Editor\\mods\\legacy"
-    
-    # Ensure the destination directory exists
-    os.makedirs(destination_directory, exist_ok=True)
-    
-    # Copy the selected directories to the destination
-    shutil.copytree(source_tv_logo, os.path.join(destination_directory, 'data'), dirs_exist_ok=True)
-    shutil.copytree(source_scoreboard, os.path.join(destination_directory, 'data'), dirs_exist_ok=True)
-    
-    # Show success message
-    messagebox.showinfo("Success", "Settings Applied and directories copied successfully")
+    if tv_var.get() >= 0:
+        selected_tv_logo = tv_options[tv_var.get()]
+        selected_tv_logo = os.path.join(selected_tv_logo, 'data')
+        source_tv_logo = os.path.join(tv_logo_directory, selected_tv_logo)
+        destination_directory = "C:\\FC 25 Live Editor\\mods\\legacy"
+        os.makedirs(destination_directory, exist_ok=True)
+        shutil.copytree(source_tv_logo, os.path.join(destination_directory, 'data'), dirs_exist_ok=True)
+        messagebox.showinfo("Success", "TV Logo Applied and directories copied successfully")
+    if scoreboard_var.get() >= 0:
+        selected_scoreboard = scoreboard_options[scoreboard_var.get()]
+        selected_scoreboard = os.path.join(selected_scoreboard, 'data')
+        source_scoreboard = os.path.join(scoreboard_directory, selected_scoreboard)
+        destination_directory = "C:\\FC 25 Live Editor\\mods\\legacy"
+        os.makedirs(destination_directory, exist_ok=True)
+        shutil.copytree(source_scoreboard, os.path.join(destination_directory, 'data'), dirs_exist_ok=True)
+        messagebox.showinfo("Success", "Scoreboard Applied and directories copied successfully")
+
 
 def on_tv_select():
     selected_tv_logo = tv_options[tv_var.get()]
@@ -106,7 +103,7 @@ left_scroll_canvas.configure(yscrollcommand=scrollbar_left.set)
 # TV Logos section
 tv_logo_directory = "./resources/tv_logo"
 tv_options = [name for name in os.listdir(tv_logo_directory) if os.path.isdir(os.path.join(tv_logo_directory, name))]
-tv_var = tk.IntVar(value=0)  # Default to the first option
+tv_var = tk.IntVar(value=-1)  # Default to the first option
 
 tv_label = tk.Label(scrollable_left_frame, text="TV Logos", fg="white", bg="black", anchor="w")
 tv_label.pack(fill=tk.X)
@@ -123,7 +120,7 @@ separator.pack(fill='x', pady=10)
 # Scoreboards section
 scoreboard_directory = "./resources/scoreboards"
 scoreboard_options = [name for name in os.listdir(scoreboard_directory) if os.path.isdir(os.path.join(scoreboard_directory, name))]
-scoreboard_var = tk.IntVar(value=0)  # Default to the first option
+scoreboard_var = tk.IntVar(value=-1)  # Default to the first option
 
 scoreboard_label = tk.Label(scrollable_left_frame, text="Scoreboards", fg="white", bg="black", anchor="w")
 scoreboard_label.pack(fill=tk.X, pady=(10, 0))
@@ -153,7 +150,7 @@ preview_canvas.create_window((0, 0), window=scrollable_right_frame, anchor="nw")
 preview_canvas.configure(yscrollcommand=scrollbar_right.set)
 
 # Add preview labels
-preview1 = tk.Label(scrollable_right_frame, text="[BeIN Sports Preview]", fg="white", bg="black")
+preview1 = tk.Label(scrollable_right_frame, text="[TV Logo Preview]", fg="white", bg="black")
 preview1.pack(pady=5)
 
 # Add a separator
@@ -167,8 +164,22 @@ preview2.pack(pady=5)
 scrollable_right_frame.update_idletasks()
 preview_canvas.config(scrollregion=preview_canvas.bbox("all"))
 # Apply button
-apply_button = tk.Button(root, text="APPLY", bg="gray", fg="white", command=on_apply)
+
+
+#if no selection for scoreboard or tv logo selected then apply button should be disabled
+apply_button = tk.Button(root, text="Apply", command=on_apply, state=tk.DISABLED)
 apply_button.pack(side=tk.BOTTOM, pady=10)
+
+# Enable the apply button if both a TV logo and a scoreboard are selected
+def enable_apply_button(*args):
+    if tv_var.get() >= 0 or scoreboard_var.get() >= 0:
+        apply_button.config(state=tk.NORMAL)
+    else:
+        apply_button.config(state=tk.DISABLED)
+
+tv_var.trace("w", enable_apply_button)
+scoreboard_var.trace("w", enable_apply_button)
+
 
 # Handle window close
 def on_close():
