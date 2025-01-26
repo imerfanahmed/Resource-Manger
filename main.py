@@ -13,6 +13,7 @@ root.configure(bg="black")
 def on_apply():
     
     if tv_var.get() >= 0:
+        reset()
         selected_tv_logo = tv_options[tv_var.get()]
         selected_tv_logo = os.path.join(selected_tv_logo, 'data')
         source_tv_logo = os.path.join(tv_logo_directory, selected_tv_logo)
@@ -21,6 +22,7 @@ def on_apply():
         shutil.copytree(source_tv_logo, os.path.join(destination_directory, 'data'), dirs_exist_ok=True)
         messagebox.showinfo("Success", "TV Logo Applied and directories copied successfully")
     if scoreboard_var.get() >= 0:
+        reset()
         selected_scoreboard = scoreboard_options[scoreboard_var.get()]
         selected_scoreboard = os.path.join(selected_scoreboard, 'data')
         source_scoreboard = os.path.join(scoreboard_directory, selected_scoreboard)
@@ -30,9 +32,15 @@ def on_apply():
         messagebox.showinfo("Success", "Scoreboard Applied and directories copied successfully")
 
 
+def reset():
+    try:
+        shutil.rmtree(r"C:\FC 25 Live Editor\mods\legacy\data\ui\game")
+    except:
+        pass
+    messagebox.showinfo("Success", "Reset successful")
+
 def on_tv_select():
     selected_tv_logo = tv_options[tv_var.get()]
-    print("TV Logo Selected:", selected_tv_logo)
     
     try:
         # Load and resize the preview image
@@ -44,12 +52,10 @@ def on_tv_select():
         preview1.config(image=img_tk)
         preview1.image = img_tk
     except Exception as e:
-        print(f"Error loading preview image: {e}")
         messagebox.showerror("Error", "Could not load preview image")
     
 def on_scoreboard_select():
     selected_scoreboard = scoreboard_options[scoreboard_var.get()]
-    print("Scoreboard Selected:", selected_scoreboard)
     
     try:
         # Load and resize the preview image
@@ -61,21 +67,40 @@ def on_scoreboard_select():
         preview2.config(image=img_tk)
         preview2.image = img_tk
     except Exception as e:
-        print(f"Error loading preview image: {e}")
         messagebox.showerror("Error", "Could not load preview image")
+
+def open_exe(file_path):
+    os.startfile(file_path)
+
 
 # Top icons frame
 top_frame = tk.Frame(root, bg="black")
 top_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
 
-icons = ["one.png", "two.png", "three.png", "four.png", "five.png"]
-for icon in icons:
-    icon_path = os.path.join("./assets", icon)
+icon_log_with_path ={
+    "EA": ("./assets/ea.png", r"C:\Program Files\Electronic Arts\EA Desktop\EA Desktop\EALauncher.exe"),
+    "steam": ("./assets/steam.png", r"C:\Program Files (x86)\Steam\Steam.exe"),
+    "mm": ("./assets/mm.png", r"C:\Program Files (x86)\Madden NFL 08\madden08.exe"),
+    "le": ("./assets/le.png", r"C:\FC 25 Live Editor\FC25LE.exe"),
+}
+
+#reset label for the top frame
+icon_path = os.path.join("./assets", "reset.png")
+img = Image.open(icon_path).resize((40, 40))
+img_tk = ImageTk.PhotoImage(img)
+label = tk.Label(top_frame, image=img_tk, bg="black")
+label.image = img_tk
+label.pack(side=tk.LEFT, padx=5)
+label.bind("<Button-1>", lambda e: reset())
+
+for icon, (path, exe) in icon_log_with_path.items():
+    icon_path = os.path.join("./assets", f"{icon}.png")
     img = Image.open(icon_path).resize((40, 40))
     img_tk = ImageTk.PhotoImage(img)
     label = tk.Label(top_frame, image=img_tk, bg="black")
     label.image = img_tk
     label.pack(side=tk.LEFT, padx=5)
+    label.bind("<Button-1>", lambda e, exe_path=exe: open_exe(exe_path))
 
 # Separator between top icons and middle frame
 separator_top = ttk.Separator(root, orient='horizontal')
@@ -186,9 +211,8 @@ def on_close():
     try:
         shutil.rmtree(r"C:\FC 25 Live Editor\mods\legacy\data\ui\game")
     except:
-        print("No data to delete")
+        pass
     root.destroy()
-    print("Closing the application")
 
 root.protocol("WM_DELETE_WINDOW", on_close)
 
