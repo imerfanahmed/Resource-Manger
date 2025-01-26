@@ -1,8 +1,9 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox,filedialog
 from PIL import Image, ImageTk
 import os
 import shutil
+import json
 
 class ResourceManagerApp:
     def __init__(self, root):
@@ -20,14 +21,24 @@ class ResourceManagerApp:
         # Variables
         self.tv_var = tk.IntVar(value=-1)
         self.scoreboard_var = tk.IntVar(value=-1)
-
+        self.load_config()
         # Widgets
         self.setup_ui()
+        
+        
 
+    def load_config(self):
+        with open('./config.json', 'r') as f:
+            self.config = json.load(f)
+
+    def save_config(self):
+        with open('config.json', 'w') as f:
+            json.dump(self.config, f, indent=4)
+            
     def setup_ui(self):
         self.create_top_frame()
         self.create_middle_frame()
-        self.create_apply_button()
+        # self.create_apply_button()
 
         self.tv_var.trace("w", self.enable_apply_button)
         self.scoreboard_var.trace("w", self.enable_apply_button)
@@ -39,8 +50,10 @@ class ResourceManagerApp:
         self.top_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
 
         # Top icons
-        self.add_reset_icon()
+        # self.add_reset_icon()
         self.add_program_icons()
+        
+        self.create_apply_button()
 
         # Separator
         separator = ttk.Separator(self.root, orient='horizontal')
@@ -56,21 +69,30 @@ class ResourceManagerApp:
         label.bind("<Button-1>", lambda e: self.reset())
 
     def add_program_icons(self):
-        icons = {
-            "EA": ("./assets/ea.png", r"C:\\Program Files\\Electronic Arts\\EA Desktop\\EA Desktop\\EALauncher.exe"),
-            "steam": ("./assets/steam.png", r"C:\\Program Files (x86)\\Steam\\Steam.exe"),
-            "mm": ("./assets/mm.png", r""),
-            "le": ("./assets/le.png", r""),
-        }
+        # Clear existing icons
+        for widget in self.top_frame.winfo_children():
+            widget.destroy()
+        
+        self.add_reset_icon()
 
-        for _, (path, exe) in icons.items():
-            img = Image.open(path).resize((40, 40))
+        for key, value in self.config.items():
+            icon_path, exe_path = value["icon"], value["path"]
+            img = Image.open(icon_path).resize((40, 40))
             img_tk = ImageTk.PhotoImage(img)
             label = tk.Label(self.top_frame, image=img_tk, bg="black")
             label.image = img_tk
             label.pack(side=tk.LEFT, padx=5)
-            label.bind("<Button-1>", lambda e, exe_path=exe: self.open_exe(exe_path))
-
+            label.bind("<Button-1>", lambda e, exe_path=exe_path: self.open_exe(exe_path))
+            label.bind("<Button-3>", lambda e, key=key: self.select_executable(key))
+            
+    def select_executable(self, key):
+        file_path = filedialog.askopenfilename(title="Select Executable", filetypes=[("Executable Files", "*.exe")])
+        if file_path:
+            self.config[key]["path"] = file_path
+            self.save_config()
+            self.load_config()
+            self.add_program_icons()
+            
     def create_middle_frame(self):
         self.middle_frame = tk.Frame(self.root, bg="black")
         self.middle_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -102,7 +124,7 @@ class ResourceManagerApp:
         canvas.config(scrollregion=canvas.bbox("all"))
 
     def add_tv_logo_options(self, parent):
-        tv_label = tk.Label(parent, text="TV Logos", fg="white", bg="black", anchor="w")
+        tv_label = tk.Label(parent, text="TV Logos", fg="white", bg="black", anchor="w", font=("Helvetica", 16))
         tv_label.pack(fill=tk.X)
 
         self.tv_options = [name for name in os.listdir(self.tv_logo_directory)
@@ -117,7 +139,7 @@ class ResourceManagerApp:
         separator = ttk.Separator(parent, orient='horizontal')
         separator.pack(fill='x', pady=10)
 
-        scoreboard_label = tk.Label(parent, text="Scoreboards", fg="white", bg="black", anchor="w")
+        scoreboard_label = tk.Label(parent, text="Scoreboards", fg="white", bg="black", anchor="w",font=("Helvetica", 16))
         scoreboard_label.pack(fill=tk.X, pady=(10, 0))
 
         self.scoreboard_options = [name for name in os.listdir(self.scoreboard_directory)
@@ -132,18 +154,47 @@ class ResourceManagerApp:
         right_frame = tk.Frame(self.middle_frame, bg="black")
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        self.preview1 = tk.Label(right_frame, text="[TV Logo Preview]", fg="white", bg="black")
+        # Create a canvas and a scrollbar
+        canvas = tk.Canvas(right_frame, bg="black")
+        scrollbar = tk.Scrollbar(right_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg="black")
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        title1 = tk.Label(scrollable_frame, text="TV Logo Preview", fg="white", bg="black", font=("Helvetica", 16))
+        title1.pack(pady=5)
+
+        self.preview1 = tk.Label(scrollable_frame, text="[TV Logo Preview]", fg="white", bg="black")
         self.preview1.pack(pady=5)
 
-        separator = ttk.Separator(right_frame, orient='horizontal')
+        separator = ttk.Separator(scrollable_frame, orient='horizontal')
         separator.pack(fill='x', pady=10)
-
-        self.preview2 = tk.Label(right_frame, text="[Scoreboard Preview]", fg="white", bg="black")
+        title2 = tk.Label(scrollable_frame, text="Scoreboard Preview", fg="white", bg="black", font=("Helvetica", 16))
+        title2.pack(pady=5)
+        self.preview2 = tk.Label(scrollable_frame, text="[Scoreboard Preview]", fg="white", bg="black")
         self.preview2.pack(pady=5)
 
     def create_apply_button(self):
-        self.apply_button = tk.Button(self.root, text="Apply", command=self.on_apply, state=tk.DISABLED)
-        self.apply_button.pack(side=tk.BOTTOM, pady=10)
+        self.apply_button = tk.Button(
+            self.top_frame, 
+            text="Apply", 
+            command=self.on_apply, 
+            state=tk.DISABLED,
+            font=("Helvetica", 14, "bold"),  # Larger font
+            bg="white",  # Background color
+            fg="black"  # Foreground (text) color
+        )
+        self.apply_button.pack(side=tk.RIGHT, padx=10)
 
     def enable_apply_button(self, *args):
         if self.tv_var.get() >= 0 or self.scoreboard_var.get() >= 0:

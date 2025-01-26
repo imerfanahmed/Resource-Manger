@@ -1,0 +1,18 @@
+{
+    "EA": {
+        "icon": "./assets/ea.png",
+        "path": "C:\\Program Files\\Electronic Arts\\EA Desktop\\EA Desktop\\EALauncher.exe"
+    },
+    "steam": {
+        "icon": "./assets/steam.png",
+        "path": "C:\\Program Files (x86)\\Steam\\Steam.exe"
+    },
+    "mm": {
+        "icon": "./assets/mm.png",
+        "path": ""
+    },
+    "le": {
+        "icon": "./assets/le.png",
+        "path": ""
+    }
+}
