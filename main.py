@@ -4,217 +4,198 @@ from PIL import Image, ImageTk
 import os
 import shutil
 
-# Create the main window
-root = tk.Tk()
-root.title("KO's Resource Manager")
-root.geometry("800x800")
-root.configure(bg="black")
+class ResourceManagerApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("KO's Resource Manager")
+        #maximize window
+        self.root.state('zoomed')
+        self.root.configure(bg="black")
 
-def on_apply():
-    
-    if tv_var.get() >= 0:
-        reset()
-        selected_tv_logo = tv_options[tv_var.get()]
-        selected_tv_logo = os.path.join(selected_tv_logo, 'data')
-        source_tv_logo = os.path.join(tv_logo_directory, selected_tv_logo)
-        destination_directory = "C:\\FC 25 Live Editor\\mods\\legacy"
-        os.makedirs(destination_directory, exist_ok=True)
-        shutil.copytree(source_tv_logo, os.path.join(destination_directory, 'data'), dirs_exist_ok=True)
-        messagebox.showinfo("Success", "TV Logo Applied and directories copied successfully")
-    if scoreboard_var.get() >= 0:
-        reset()
-        selected_scoreboard = scoreboard_options[scoreboard_var.get()]
-        selected_scoreboard = os.path.join(selected_scoreboard, 'data')
-        source_scoreboard = os.path.join(scoreboard_directory, selected_scoreboard)
-        destination_directory = "C:\\FC 25 Live Editor\\mods\\legacy"
-        os.makedirs(destination_directory, exist_ok=True)
-        shutil.copytree(source_scoreboard, os.path.join(destination_directory, 'data'), dirs_exist_ok=True)
-        messagebox.showinfo("Success", "Scoreboard Applied and directories copied successfully")
+        # Directories
+        self.tv_logo_directory = "./resources/tv_logo"
+        self.scoreboard_directory = "./resources/scoreboards"
+        self.destination_directory = "C:\\FC 25 Live Editor\\mods\\legacy"
 
+        # Variables
+        self.tv_var = tk.IntVar(value=-1)
+        self.scoreboard_var = tk.IntVar(value=-1)
 
-def reset():
-    try:
-        shutil.rmtree(r"C:\FC 25 Live Editor\mods\legacy\data\ui\game")
-    except:
-        pass
-    messagebox.showinfo("Success", "Reset successful")
+        # Widgets
+        self.setup_ui()
 
-def on_tv_select():
-    selected_tv_logo = tv_options[tv_var.get()]
-    
-    try:
-        # Load and resize the preview image
-        img_path = os.path.join(tv_logo_directory, selected_tv_logo, "preview.jpg")
-        img = Image.open(img_path)
+    def setup_ui(self):
+        self.create_top_frame()
+        self.create_middle_frame()
+        self.create_apply_button()
+
+        self.tv_var.trace("w", self.enable_apply_button)
+        self.scoreboard_var.trace("w", self.enable_apply_button)
+
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def create_top_frame(self):
+        self.top_frame = tk.Frame(self.root, bg="black")
+        self.top_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
+
+        # Top icons
+        self.add_reset_icon()
+        self.add_program_icons()
+
+        # Separator
+        separator = ttk.Separator(self.root, orient='horizontal')
+        separator.pack(fill='x', padx=20, pady=5)
+
+    def add_reset_icon(self):
+        icon_path = os.path.join("./assets", "reset.png")
+        img = Image.open(icon_path).resize((40, 40))
         img_tk = ImageTk.PhotoImage(img)
-        
-        # Update the preview label
-        preview1.config(image=img_tk)
-        preview1.image = img_tk
-    except Exception as e:
-        messagebox.showerror("Error", "Could not load preview image")
-    
-def on_scoreboard_select():
-    selected_scoreboard = scoreboard_options[scoreboard_var.get()]
-    
-    try:
-        # Load and resize the preview image
-        img_path = os.path.join(scoreboard_directory, selected_scoreboard, "preview.jpg")
-        img = Image.open(img_path)
-        img_tk = ImageTk.PhotoImage(img)
-        
-        # Update the preview label
-        preview2.config(image=img_tk)
-        preview2.image = img_tk
-    except Exception as e:
-        messagebox.showerror("Error", "Could not load preview image")
+        label = tk.Label(self.top_frame, image=img_tk, bg="black")
+        label.image = img_tk
+        label.pack(side=tk.LEFT, padx=5)
+        label.bind("<Button-1>", lambda e: self.reset())
 
-def open_exe(file_path):
-    os.startfile(file_path)
+    def add_program_icons(self):
+        icons = {
+            "EA": ("./assets/ea.png", r"C:\\Program Files\\Electronic Arts\\EA Desktop\\EA Desktop\\EALauncher.exe"),
+            "steam": ("./assets/steam.png", r"C:\\Program Files (x86)\\Steam\\Steam.exe"),
+            "mm": ("./assets/mm.png", r""),
+            "le": ("./assets/le.png", r""),
+        }
 
+        for _, (path, exe) in icons.items():
+            img = Image.open(path).resize((40, 40))
+            img_tk = ImageTk.PhotoImage(img)
+            label = tk.Label(self.top_frame, image=img_tk, bg="black")
+            label.image = img_tk
+            label.pack(side=tk.LEFT, padx=5)
+            label.bind("<Button-1>", lambda e, exe_path=exe: self.open_exe(exe_path))
 
-# Top icons frame
-top_frame = tk.Frame(root, bg="black")
-top_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
+    def create_middle_frame(self):
+        self.middle_frame = tk.Frame(self.root, bg="black")
+        self.middle_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-icon_log_with_path ={
-    "EA": ("./assets/ea.png", r"C:\Program Files\Electronic Arts\EA Desktop\EA Desktop\EALauncher.exe"),
-    "steam": ("./assets/steam.png", r"C:\Program Files (x86)\Steam\Steam.exe"),
-    "mm": ("./assets/mm.png", r"C:\Program Files (x86)\Madden NFL 08\madden08.exe"),
-    "le": ("./assets/le.png", r"C:\FC 25 Live Editor\FC25LE.exe"),
-}
+        self.create_left_frame()
+        self.create_right_frame()
 
-#reset label for the top frame
-icon_path = os.path.join("./assets", "reset.png")
-img = Image.open(icon_path).resize((40, 40))
-img_tk = ImageTk.PhotoImage(img)
-label = tk.Label(top_frame, image=img_tk, bg="black")
-label.image = img_tk
-label.pack(side=tk.LEFT, padx=5)
-label.bind("<Button-1>", lambda e: reset())
+    def create_left_frame(self):
+        left_frame = tk.Frame(self.middle_frame, bg="black")
+        left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10)
 
-for icon, (path, exe) in icon_log_with_path.items():
-    icon_path = os.path.join("./assets", f"{icon}.png")
-    img = Image.open(icon_path).resize((40, 40))
-    img_tk = ImageTk.PhotoImage(img)
-    label = tk.Label(top_frame, image=img_tk, bg="black")
-    label.image = img_tk
-    label.pack(side=tk.LEFT, padx=5)
-    label.bind("<Button-1>", lambda e, exe_path=exe: open_exe(exe_path))
+        self.add_scrollable_options(left_frame)
 
-# Separator between top icons and middle frame
-separator_top = ttk.Separator(root, orient='horizontal')
-separator_top.pack(fill='x', padx=20, pady=5)
+    def add_scrollable_options(self, parent):
+        canvas = tk.Canvas(parent, bg="black", highlightthickness=0)
+        canvas.pack(side=tk.LEFT, fill=tk.Y, expand=True)
 
-# Middle frame with options and previews
-middle_frame = tk.Frame(root, bg="black")
-middle_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        scrollbar = tk.Scrollbar(parent, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-# Left frame for options
-left_frame = tk.Frame(middle_frame, bg="black")
-left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10)
+        frame = tk.Frame(canvas, bg="black")
+        canvas.create_window((0, 0), window=frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
 
-# Scrollable area for TV Logos and Scoreboards
-left_scroll_canvas = tk.Canvas(left_frame, bg="black", highlightthickness=0)
-left_scroll_canvas.pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        self.add_tv_logo_options(frame)
+        self.add_scoreboard_options(frame)
 
-scrollbar_left = tk.Scrollbar(left_frame, orient="vertical", command=left_scroll_canvas.yview)
-scrollbar_left.pack(side=tk.RIGHT, fill=tk.Y)
+        frame.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
 
-scrollable_left_frame = tk.Frame(left_scroll_canvas, bg="black")
-left_scroll_canvas.create_window((0, 0), window=scrollable_left_frame, anchor="nw")
-left_scroll_canvas.configure(yscrollcommand=scrollbar_left.set)
+    def add_tv_logo_options(self, parent):
+        tv_label = tk.Label(parent, text="TV Logos", fg="white", bg="black", anchor="w")
+        tv_label.pack(fill=tk.X)
 
-# TV Logos section
-tv_logo_directory = "./resources/tv_logo"
-tv_options = [name for name in os.listdir(tv_logo_directory) if os.path.isdir(os.path.join(tv_logo_directory, name))]
-tv_var = tk.IntVar(value=-1)  # Default to the first option
+        self.tv_options = [name for name in os.listdir(self.tv_logo_directory)
+                           if os.path.isdir(os.path.join(self.tv_logo_directory, name))]
 
-tv_label = tk.Label(scrollable_left_frame, text="TV Logos", fg="white", bg="black", anchor="w")
-tv_label.pack(fill=tk.X)
+        for index, option in enumerate(self.tv_options):
+            radio = tk.Radiobutton(parent, text=option, variable=self.tv_var, value=index,
+                                   bg="black", fg="white", selectcolor="black", command=self.on_tv_select)
+            radio.pack(anchor="w")
 
-for index, option in enumerate(tv_options):
-    radio = tk.Radiobutton(scrollable_left_frame, text=option, variable=tv_var, value=index,
-                           bg="black", fg="white", selectcolor="black", command=on_tv_select)
-    radio.pack(anchor="w")
+    def add_scoreboard_options(self, parent):
+        separator = ttk.Separator(parent, orient='horizontal')
+        separator.pack(fill='x', pady=10)
 
-# Separator between TV Logos and Scoreboards
-separator = ttk.Separator(scrollable_left_frame, orient='horizontal')
-separator.pack(fill='x', pady=10)
+        scoreboard_label = tk.Label(parent, text="Scoreboards", fg="white", bg="black", anchor="w")
+        scoreboard_label.pack(fill=tk.X, pady=(10, 0))
 
-# Scoreboards section
-scoreboard_directory = "./resources/scoreboards"
-scoreboard_options = [name for name in os.listdir(scoreboard_directory) if os.path.isdir(os.path.join(scoreboard_directory, name))]
-scoreboard_var = tk.IntVar(value=-1)  # Default to the first option
+        self.scoreboard_options = [name for name in os.listdir(self.scoreboard_directory)
+                                    if os.path.isdir(os.path.join(self.scoreboard_directory, name))]
 
-scoreboard_label = tk.Label(scrollable_left_frame, text="Scoreboards", fg="white", bg="black", anchor="w")
-scoreboard_label.pack(fill=tk.X, pady=(10, 0))
+        for index, option in enumerate(self.scoreboard_options):
+            radio = tk.Radiobutton(parent, text=option, variable=self.scoreboard_var, value=index,
+                                   bg="black", fg="white", selectcolor="black", command=self.on_scoreboard_select)
+            radio.pack(anchor="w")
 
-for index, option in enumerate(scoreboard_options):
-    radio = tk.Radiobutton(scrollable_left_frame, text=option, variable=scoreboard_var, value=index,
-                           bg="black", fg="white", selectcolor="black", command=on_scoreboard_select)
-    radio.pack(anchor="w")
+    def create_right_frame(self):
+        right_frame = tk.Frame(self.middle_frame, bg="black")
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-# Configure scrolling for the left section
-scrollable_left_frame.update_idletasks()
-left_scroll_canvas.config(scrollregion=left_scroll_canvas.bbox("all"))
+        self.preview1 = tk.Label(right_frame, text="[TV Logo Preview]", fg="white", bg="black")
+        self.preview1.pack(pady=5)
 
-# Right frame for previews
-right_frame = tk.Frame(middle_frame, bg="black")
-right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        separator = ttk.Separator(right_frame, orient='horizontal')
+        separator.pack(fill='x', pady=10)
 
-# Scrollable area for previews
-preview_canvas = tk.Canvas(right_frame, bg="black", highlightthickness=0)
-preview_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.preview2 = tk.Label(right_frame, text="[Scoreboard Preview]", fg="white", bg="black")
+        self.preview2.pack(pady=5)
 
-scrollbar_right = tk.Scrollbar(right_frame, orient="vertical", command=preview_canvas.yview)
-scrollbar_right.pack(side=tk.RIGHT, fill=tk.Y)
+    def create_apply_button(self):
+        self.apply_button = tk.Button(self.root, text="Apply", command=self.on_apply, state=tk.DISABLED)
+        self.apply_button.pack(side=tk.BOTTOM, pady=10)
 
-scrollable_right_frame = tk.Frame(preview_canvas, bg="black")
-preview_canvas.create_window((0, 0), window=scrollable_right_frame, anchor="nw")
-preview_canvas.configure(yscrollcommand=scrollbar_right.set)
+    def enable_apply_button(self, *args):
+        if self.tv_var.get() >= 0 or self.scoreboard_var.get() >= 0:
+            self.apply_button.config(state=tk.NORMAL)
+        else:
+            self.apply_button.config(state=tk.DISABLED)
 
-# Add preview labels
-preview1 = tk.Label(scrollable_right_frame, text="[TV Logo Preview]", fg="white", bg="black")
-preview1.pack(pady=5)
+    def reset(self):
+        try:
+            shutil.rmtree(os.path.join(self.destination_directory, "data", "ui", "game"))
+        except FileNotFoundError:
+            pass
+        # messagebox.showinfo("Success", "Reset successful")
 
-# Add a separator
-separator = ttk.Separator(scrollable_right_frame, orient='horizontal')
-separator.pack(fill='x', pady=10)
+    def on_apply(self):
+        if self.tv_var.get() >= 0:
+            self.apply_resource(self.tv_logo_directory, self.tv_options[self.tv_var.get()])
 
-preview2 = tk.Label(scrollable_right_frame, text="[Scoreboard Preview]", fg="white", bg="black")
-preview2.pack(pady=5)
+        if self.scoreboard_var.get() >= 0:
+            self.apply_resource(self.scoreboard_directory, self.scoreboard_options[self.scoreboard_var.get()])
 
-# Configure scrolling for the right section
-scrollable_right_frame.update_idletasks()
-preview_canvas.config(scrollregion=preview_canvas.bbox("all"))
-# Apply button
+    def apply_resource(self, base_directory, selected_option):
+        source = os.path.join(base_directory, selected_option, "data")
+        destination = os.path.join(self.destination_directory, "data")
+        os.makedirs(destination, exist_ok=True)
+        shutil.copytree(source, destination, dirs_exist_ok=True)
+        messagebox.showinfo("Success", f"{selected_option} applied successfully!")
 
+    def on_tv_select(self):
+        self.update_preview(self.tv_logo_directory, self.tv_options[self.tv_var.get()], self.preview1)
 
-#if no selection for scoreboard or tv logo selected then apply button should be disabled
-apply_button = tk.Button(root, text="Apply", command=on_apply, state=tk.DISABLED)
-apply_button.pack(side=tk.BOTTOM, pady=10)
+    def on_scoreboard_select(self):
+        self.update_preview(self.scoreboard_directory, self.scoreboard_options[self.scoreboard_var.get()], self.preview2)
 
-# Enable the apply button if both a TV logo and a scoreboard are selected
-def enable_apply_button(*args):
-    if tv_var.get() >= 0 or scoreboard_var.get() >= 0:
-        apply_button.config(state=tk.NORMAL)
-    else:
-        apply_button.config(state=tk.DISABLED)
+    def update_preview(self, base_directory, selected_option, preview_label):
+        try:
+            img_path = os.path.join(base_directory, selected_option, "preview.jpg")
+            img = Image.open(img_path)
+            img_tk = ImageTk.PhotoImage(img)
+            preview_label.config(image=img_tk)
+            preview_label.image = img_tk
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not load preview image: {e}")
 
-tv_var.trace("w", enable_apply_button)
-scoreboard_var.trace("w", enable_apply_button)
+    def open_exe(self, file_path):
+        os.startfile(file_path)
 
+    def on_close(self):
+        self.reset()
+        self.root.destroy()
 
-# Handle window close
-def on_close():
-    try:
-        shutil.rmtree(r"C:\FC 25 Live Editor\mods\legacy\data\ui\game")
-    except:
-        pass
-    root.destroy()
-
-root.protocol("WM_DELETE_WINDOW", on_close)
-
-# Start the main loop
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ResourceManagerApp(root)
+    root.mainloop()
