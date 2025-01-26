@@ -156,7 +156,7 @@ class ResourceManagerApp:
             shutil.rmtree(os.path.join(self.destination_directory, "data", "ui", "game"))
         except FileNotFoundError:
             pass
-        # messagebox.showinfo("Success", "Reset successful")
+        messagebox.showinfo("Success", "Reset successful")
 
     def on_apply(self):
         if self.tv_var.get() >= 0:
