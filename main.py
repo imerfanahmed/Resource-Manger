@@ -8,6 +8,9 @@ import json
 class ResourceManagerApp:
     def __init__(self, root):
         self.root = root
+         # Bind F1 and F2 keys
+        self.root.bind('<F1>', self.restore_window)
+        self.root.bind('<F2>', self.minimize_window)
 
         self.root.title("KO's Resource Manager")
         self.root.geometry("1100x600")
@@ -27,6 +30,12 @@ class ResourceManagerApp:
         self.load_config()
         self.setup_ui()
 
+    def restore_window(self, event):
+        self.root.deiconify()
+    
+    def minimize_window(self, event):
+        self.root.iconify()
+    
     def load_config(self):
         with open('./config.json', 'r') as f:
             self.config = json.load(f)
@@ -203,6 +212,10 @@ class ResourceManagerApp:
         self.apply_button = tk.Button(self.top_frame, text="Apply", command=self.on_apply, state=tk.DISABLED,
                                        font=("Helvetica", 14, "bold"), bg="#F0F0F0", fg="black")
         self.apply_button.pack(side=tk.RIGHT, padx=10)
+        
+        #message beside apply button
+        self.applied_message = tk.Label(self.top_frame, text="", fg="black", bg="#F0F0F0", font=("Helvetica", 12))
+        self.applied_message.pack(side=tk.RIGHT, padx=10)
 
     def enable_apply_button(self, *args):
         if self.tv_var.get() >= 0 or self.scoreboard_var.get() >= 0:
@@ -298,12 +311,13 @@ class ResourceManagerApp:
         destination = os.path.join(self.destination_directory, "data")
         os.makedirs(destination, exist_ok=True)
         shutil.copytree(source, destination, dirs_exist_ok=True)
-        messagebox.showinfo("Success", f"{selected_option} applied successfully!")
+        self.applied_message.config(text="Applied Successfully!!",fg="green")
 
     def open_exe(self, file_path):
         os.startfile(file_path)
 
     def on_close(self):
+        self.reset()
         self.root.destroy()
 
 if __name__ == "__main__":
