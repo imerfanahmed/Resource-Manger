@@ -50,15 +50,27 @@ class ResourceManagerApp:
         self.top_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
 
         self.add_program_icons()
-        self.create_apply_button()
+        
 
         separator = ttk.Separator(self.root, orient='horizontal')
         separator.pack(fill='x', padx=20, pady=5)
 
+
+    def add_reset_icon(self):
+        icon_path = os.path.join("./assets", "reset.png")
+        img = Image.open(icon_path).resize((40, 40))
+        img_tk = ImageTk.PhotoImage(img)
+        label = tk.Label(self.top_frame, image=img_tk, bg="#F0F0F0")
+        label.image = img_tk
+        label.pack(side=tk.LEFT, padx=5)
+        label.bind("<Button-1>", lambda e: self.reset())
+        
     def add_program_icons(self):
         for widget in self.top_frame.winfo_children():
             widget.destroy()
 
+        self.add_reset_icon()
+        self.create_apply_button()
         for key, value in self.config.items():
             icon_path, exe_path = value["icon"], value["path"]
             img = Image.open(icon_path).resize((40, 40))
