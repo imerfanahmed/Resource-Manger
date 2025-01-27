@@ -55,7 +55,6 @@ class ResourceManagerApp:
         separator = ttk.Separator(self.root, orient='horizontal')
         separator.pack(fill='x', padx=20, pady=5)
 
-
     def add_reset_icon(self):
         icon_path = os.path.join("./assets", "reset.png")
         img = Image.open(icon_path).resize((40, 40))
@@ -120,16 +119,16 @@ class ResourceManagerApp:
             preview_label.config(text="[No Preview Available]", image="", compound="none")
 
     def create_left_frame(self):
-        left_frame = tk.Frame(self.middle_frame, bg="#F0F0F0")
-        left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10)
-        self.add_scrollable_options(left_frame)
+            left_frame = tk.Frame(self.middle_frame, bg="#F0F0F0")
+            left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10)
+            self.add_scrollable_options(left_frame)
 
     def add_scrollable_options(self, parent):
-        canvas = tk.Canvas(parent, bg="#F0F0F0", highlightthickness=0)
+        canvas = tk.Canvas(parent, bg="#F0F0F0", highlightthickness=0, width=200)
         canvas.pack(side=tk.LEFT, fill=tk.Y, expand=True)
 
-        scrollbar = tk.Scrollbar(parent, orient="vertical", command=canvas.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        scrollbar = tk.Scrollbar(parent, orient="vertical", command=canvas.yview, bg="black", activebackground="black", troughcolor="black", highlightbackground="black", highlightcolor="black")
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y, expand=True)
 
         frame = tk.Frame(canvas, bg="#F0F0F0")
         canvas.create_window((0, 0), window=frame, anchor="nw")
