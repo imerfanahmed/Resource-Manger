@@ -193,7 +193,7 @@ class ResourceManagerApp:
     def update_variation_dropdown(self, *args):
         selected_index = self.scoreboard_var.get()
         if selected_index < 0:
-            self.variation_dropdown.config(state=tk.DISABLED)
+            self.variation_dropdown.pack_forget()
             self.variation_var.set("")
             return
 
@@ -201,13 +201,19 @@ class ResourceManagerApp:
         base_directory = os.path.join(self.scoreboard_directory, selected_option)
         variations = [d for d in os.listdir(base_directory) if os.path.isdir(os.path.join(base_directory, d))]
 
-        menu = self.variation_dropdown["menu"]
-        menu.delete(0, "end")
-        for variation in variations:
-            menu.add_command(label=variation, command=lambda v=variation: self.variation_var.set(v))
+        if variations:
+            menu = self.variation_dropdown["menu"]
+            menu.delete(0, "end")
+            for variation in variations:
+                menu.add_command(label=variation, command=lambda v=variation: self.variation_var.set(v))
 
-        self.variation_var.set(variations[0]) if variations else self.variation_var.set("")
-        self.variation_dropdown.config(state=tk.NORMAL if variations else tk.DISABLED)
+            self.variation_var.set(variations[0])
+            self.variation_dropdown.pack(pady=10)  # Ensure the dropdown is shown
+            self.variation_dropdown.config(state=tk.NORMAL)
+        else:
+            self.variation_dropdown.pack_forget()  # Hide the dropdown if no variations
+            self.variation_var.set("")
+
 
     def update_scoreboard_preview(self, *args):
         selected_index = self.scoreboard_var.get()
