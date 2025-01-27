@@ -101,7 +101,7 @@ class ResourceManagerApp:
                 preview_label.image = img_tk
             else:
                 # No preview image found
-                preview_label.config(text="[No Preview Available]", image="", compound="none")
+                preview_label.config(text="", image="", compound="none")
         except Exception as e:
             # Handle errors and fallback
             messagebox.showerror("Error", f"Could not load preview image: {e}")
