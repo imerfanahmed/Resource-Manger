@@ -35,6 +35,13 @@ class ResourceManagerApp:
         with open('config.json', 'w') as f:
             json.dump(self.config, f, indent=4)
 
+    def reset(self):
+        try:
+            shutil.rmtree(os.path.join(self.destination_directory, "data", "ui", "game"))
+        except FileNotFoundError:
+            pass
+        messagebox.showinfo("Success", "Reset successful")
+
     def setup_ui(self):
         self.create_top_frame()
         self.create_middle_frame()
