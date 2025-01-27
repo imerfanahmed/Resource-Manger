@@ -185,6 +185,7 @@ class ResourceManagerApp:
         self.apply_button.pack(side=tk.RIGHT, padx=10)
 
     def enable_apply_button(self, *args):
+        print(self.scoreboard_var.get())
         if self.tv_var.get() >= 0 or self.scoreboard_var.get() >= 0:
             self.apply_button.config(state=tk.NORMAL)
         else:
@@ -249,10 +250,17 @@ class ResourceManagerApp:
         if self.scoreboard_var.get() >= 0:
             selected_option = self.scoreboard_options[self.scoreboard_var.get()]
             selected_variation = self.variation_var.get()
+            #if the selected variation is data it means its not a variation
+            if selected_variation == "data":
+                self.apply_resource(self.scoreboard_directory, selected_option)
+            else:
+                base_directory = os.path.join(self.scoreboard_directory, selected_option)
+                self.apply_resource(base_directory, selected_variation)
 
-            if selected_variation:
-                self.apply_resource(os.path.join(self.scoreboard_directory, selected_option), selected_variation)
 
+    def has_variations(self, base_directory, selected_option):
+        #if the selected has no preview image, it has variations
+        return not os.path.exists(os.path.join(base_directory, selected_option, "preview.jpg"))
     def apply_resource(self, base_directory, selected_option):
         source = os.path.join(base_directory, selected_option, "data")
         destination = os.path.join(self.destination_directory, "data")
