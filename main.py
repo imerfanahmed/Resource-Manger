@@ -39,9 +39,9 @@ class ResourceManagerApp:
         self.create_top_frame()
         self.create_middle_frame()
 
-        self.tv_var.trace("w", self.enable_apply_button)
-        self.scoreboard_var.trace("w", self.update_variation_dropdown)
-        self.variation_var.trace("w", self.update_scoreboard_preview)
+        self.tv_var.trace_add(['write'], self.enable_apply_button)
+        self.scoreboard_var.trace_add(['write'], self.enable_apply_button)
+        self.scoreboard_var.trace_add(['write'], self.update_variation_dropdown)
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
