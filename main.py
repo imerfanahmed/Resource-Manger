@@ -194,8 +194,10 @@ class ResourceManagerApp:
         self.preview2.pack(pady=5)
 
         self.variation_dropdown = OptionMenu(self.right_frame, self.variation_var, "")
-        self.variation_dropdown.pack(pady=10)
-        self.variation_dropdown.config(state=tk.DISABLED)
+        self.variation_dropdown.pack_forget()
+        
+        self.variation_var.trace_add(['write'], self.update_scoreboard_preview)
+    
 
     def create_apply_button(self):
         self.apply_button = tk.Button(self.top_frame, text="Apply", command=self.on_apply, state=tk.DISABLED,
@@ -203,13 +205,14 @@ class ResourceManagerApp:
         self.apply_button.pack(side=tk.RIGHT, padx=10)
 
     def enable_apply_button(self, *args):
-        print(self.scoreboard_var.get())
         if self.tv_var.get() >= 0 or self.scoreboard_var.get() >= 0:
             self.apply_button.config(state=tk.NORMAL)
         else:
             self.apply_button.config(state=tk.DISABLED)
 
     def update_variation_dropdown(self, *args):
+        self.variation_dropdown.pack(pady=10)
+        self.variation_dropdown.config(state=tk.NORMAL)
         selected_index = self.scoreboard_var.get()
         if selected_index < 0:
             self.variation_dropdown.pack_forget()
@@ -220,7 +223,7 @@ class ResourceManagerApp:
         base_directory = os.path.join(self.scoreboard_directory, selected_option)
         variations = [d for d in os.listdir(base_directory) if os.path.isdir(os.path.join(base_directory, d))]
 
-        if variations:
+        if variations != ["data"]:
             menu = self.variation_dropdown["menu"]
             menu.delete(0, "end")
             for variation in variations:
@@ -234,16 +237,26 @@ class ResourceManagerApp:
             self.variation_var.set("")
 
 
+# ...existing code...
+
     def update_scoreboard_preview(self, *args):
         selected_index = self.scoreboard_var.get()
         selected_variation = self.variation_var.get()
 
-        if selected_index < 0 or not selected_variation:
+        if selected_index < 0:
             self.preview2.config(text="[Scoreboard Preview]", image="", compound="none")
             return
 
         selected_option = self.scoreboard_options[selected_index]
         variation_path = os.path.join(self.scoreboard_directory, selected_option, selected_variation, "preview.jpg")
+        # Check if the selected option has variations
+        if not selected_variation:
+            variations_dir = os.path.join(self.scoreboard_directory, selected_option)
+            if os.path.isdir(variations_dir):
+                variations = os.listdir(variations_dir)
+                if variations:
+                    self.variation_var.set(variations[0])  # Set to the first variation
+                    variation_path = os.path.join(variations_dir, variations[0], "preview.jpg")
 
         if os.path.exists(variation_path):
             img = Image.open(variation_path)
@@ -252,6 +265,7 @@ class ResourceManagerApp:
             self.preview2.image = img_tk
         else:
             self.preview2.config(text="[No Preview Available]", image="", compound="none")
+# ...existing code...
 
     def on_tv_select(self):
         self.update_preview(self.tv_logo_directory, self.tv_options[self.tv_var.get()], self.preview1)
